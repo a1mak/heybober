@@ -6,6 +6,30 @@ export interface GmailMessage {
   snippet: string;
 }
 
+export interface EnhancedGmailMessage extends GmailMessage {
+  content: {
+    original: string;
+    processed?: {
+      translatedText?: string;
+      summary?: string;
+      language?: string;
+      confidence?: number;
+    };
+  };
+  aiProcessing: {
+    status: 'pending' | 'completed' | 'failed';
+    processedAt?: string;
+    error?: string;
+  };
+}
+
+export interface OpenAiAssistantResponse {
+  translatedContent?: string;
+  summary: string;
+  detectedLanguage?: string;
+  confidence?: number;
+}
+
 export interface AuthenticatedUser {
   email: string;
   accessToken: string;

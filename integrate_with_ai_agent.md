@@ -32,12 +32,12 @@ This PRD outlines the integration of OpenAI Assistant capabilities into the exis
 - **REQ-009:** Maintain original message metadata (sender, subject, date)
 - **REQ-010:** Cache AI processing results to avoid redundant API calls
 
-#### 4.3 User Interface Enhancements
-- **REQ-011:** Display original and AI-processed content side-by-side
-- **REQ-012:** Show loading states during AI processing operations
-- **REQ-013:** Present AI-generated summaries prominently
-- **REQ-014:** Handle partial failures (some messages processed, others failed)
-- **REQ-015:** Provide clear error messaging for AI processing failures
+#### 4.3 User Interface Enhancements (Simplified)
+- **REQ-011:** Display original and AI-processed content in simple text format
+- **REQ-012:** Show basic "Processing..." text during AI operations
+- **REQ-013:** Present AI-generated summaries as plain text below original messages
+- **REQ-014:** Handle partial failures with simple error text display
+- **REQ-015:** Provide basic error messaging without complex UI components
 
 #### 4.4 Performance & Reliability
 - **REQ-016:** Implement timeout handling for AI API calls
@@ -66,11 +66,11 @@ This PRD outlines the integration of OpenAI Assistant capabilities into the exis
 - **TECH-012:** Thread management for conversation context
 - **TECH-013:** Response parsing and formatting
 
-#### 5.4 Frontend Architecture Updates
-- **TECH-014:** New React components for enhanced message display
-- **TECH-015:** Loading states and progress indicators
-- **TECH-016:** Error boundary components for AI processing failures
-- **TECH-017:** Responsive layout for dual content display
+#### 5.4 Frontend Architecture Updates (Simplified)
+- **TECH-014:** Minimal updates to existing React components
+- **TECH-015:** Basic text-based loading indicators
+- **TECH-016:** Simple error text display within message components
+- **TECH-017:** Clean text-based layout for AI content display
 
 ### 6. API Specifications
 
@@ -130,18 +130,18 @@ interface OpenAiService {
 
 ### 7. User Experience Flow
 
-#### 7.1 Enhanced Message Loading Flow
+#### 7.1 Enhanced Message Loading Flow (Simplified)
 1. User clicks "Refresh Messages" or loads application
 2. Gmail messages fetched with full content
 3. AI processing initiated automatically in background
-4. UI shows loading states for messages being processed
-5. Messages display progressively as AI processing completes
-6. Final view shows original content alongside AI enhancements
+4. UI shows simple "Processing..." text for messages being processed
+5. Messages display with AI content when processing completes
+6. Final view shows original content with AI responses below each message
 
-#### 7.2 Error Handling Flow
+#### 7.2 Error Handling Flow (Simplified)
 1. If AI processing fails for individual messages, show original content only
-2. Display non-intrusive error indicator for failed AI processing
-3. Allow user to retry AI processing for failed messages
+2. Display simple error text like "AI processing failed" below message
+3. No retry functionality - keep UI minimal
 4. Maintain full application functionality even with AI service unavailable
 
 ### 8. Implementation Phases
@@ -159,10 +159,10 @@ interface OpenAiService {
 - Unit testing for new services
 
 #### Phase 3: Frontend Enhancement (Week 2)
-- Create enhanced message display components
-- Implement loading states and error handling
+- Update existing message components with minimal changes
+- Add basic text indicators for processing and errors
 - Update main application to use new endpoints
-- Responsive design for dual content display
+- Simple text-based display for AI responses
 
 #### Phase 4: Optimization & Testing (Week 2-3)
 - Performance optimization and caching
@@ -204,6 +204,11 @@ interface OpenAiService {
 - Environment configuration for OpenAI API key
 - Node.js OpenAI SDK integration
 
+### 11.1 API Documentation Reference
+- **Primary Reference:** [OpenAI Assistants API Documentation](https://platform.openai.com/docs/api-reference/assistants/createAssistant)
+- Implementation must follow official OpenAI API patterns and best practices
+- Use latest stable SDK version for Node.js integration
+
 ### 12. Out of Scope
 - Creating or modifying the OpenAI Assistant (assumed to exist)
 - Advanced message management (reply, forward, delete)
@@ -220,9 +225,9 @@ interface OpenAiService {
 - **Gmail API Quota:** Monitor usage and implement efficient caching
 
 #### 13.2 User Experience Risks
-- **Slow AI Processing:** Show progress indicators and partial results
+- **Slow AI Processing:** Show simple "Processing..." text without complex indicators
 - **AI Service Downtime:** Ensure application functions normally with original content
-- **Translation Accuracy:** Display original alongside translated content
+- **Translation Accuracy:** Display original alongside translated content with minimal formatting
 
 ### 14. Project Structure Updates
 ```
@@ -238,18 +243,29 @@ interface OpenAiService {
 │   │       └── index.ts (new AI interfaces)
 ├── client/
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── EnhancedMessage.tsx (new)
-│   │   │   └── MessageSummary.tsx (new)
-│   │   └── App.tsx (updated for enhanced display)
+│   │   └── App.tsx (minimal updates for AI response display)
 ├── PRD.md (original)
 ├── integrate_with_ai_agent.md (this document)
 └── README.md (updated with AI integration setup)
 ```
 
-### 15. Configuration Requirements
+### 15. Implementation Philosophy - Keep It Simple
 
-#### 15.1 Environment Variables
+#### 15.1 UI Design Principles
+- **Minimal Complexity:** No fancy loading animations or complex state management
+- **Resource Efficient:** Avoid unnecessary re-renders and complex components
+- **Clean Display:** Simple text-based presentation of AI responses
+- **Fast Implementation:** Focus on core functionality over visual polish
+
+#### 15.2 Technical Approach
+- Extend existing components rather than creating new complex ones
+- Use basic text indicators for all user feedback
+- Implement straightforward error handling without modal dialogs
+- Follow OpenAI Assistants API documentation exactly as specified
+
+### 16. Configuration Requirements
+
+#### 16.1 Environment Variables
 ```bash
 # OpenAI Configuration
 OPENAI_API_KEY=your_openai_api_key
@@ -260,7 +276,7 @@ GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 ```
 
-#### 15.2 Package Dependencies
+#### 16.2 Package Dependencies
 ```json
 {
   "openai": "^4.x.x",

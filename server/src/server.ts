@@ -3,6 +3,7 @@ import cors from 'cors';
 import session from 'express-session';
 import dotenv from 'dotenv';
 import { GmailService } from './services/gmailService';
+import { OpenAiService } from './services/openAiService';
 import { createAuthRouter } from './routes/auth';
 import { createMessagesRouter } from './routes/messages';
 import { GoogleAuthConfig } from './types';
@@ -32,6 +33,24 @@ const googleAuthConfig: GoogleAuthConfig = {
 // Initialize Gmail service
 const gmailService = new GmailService(googleAuthConfig);
 
+// Initialize OpenAI service (optional - graceful degradation if not configured)
+let openAiService: OpenAiService | undefined;
+try {
+  if (process.env.OPENAI_API_KEY && process.env.OPENAI_ASSISTANT_ID) {
+    openAiService = new OpenAiService(
+      process.env.OPENAI_API_KEY,
+      process.env.OPENAI_ASSISTANT_ID
+    );
+    console.log('OpenAI service initialized successfully');
+  } else {
+    console.log('OpenAI service not configured - AI features will be unavailable');
+    console.log('To enable AI features, set OPENAI_API_KEY and OPENAI_ASSISTANT_ID environment variables');
+  }
+} catch (error) {
+  console.error('Failed to initialize OpenAI service:', error);
+  console.log('AI features will be unavailable');
+}
+
 // Middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
@@ -55,7 +74,7 @@ app.use(session({
 
 // Routes
 app.use('/', createAuthRouter(gmailService));
-app.use('/api', createMessagesRouter(gmailService));
+app.use('/api', createMessagesRouter(gmailService, openAiService));
 
 // Health check endpoint
 app.get('/health', (req, res) => {

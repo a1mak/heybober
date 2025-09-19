@@ -64,8 +64,7 @@ export class GmailService {
         const messageResponse = await this.gmail.users.messages.get({
           userId: 'me',
           id: msg.id!,
-          format: 'metadata',
-          metadataHeaders: ['From', 'Subject', 'Date']
+          format: 'full'
         });
 
         const message = messageResponse.data;
@@ -81,7 +80,7 @@ export class GmailService {
           subject: getHeader('Subject') || '(No Subject)',
           sender: this.extractSenderEmail(getHeader('From')),
           date: new Date(getHeader('Date')).toISOString(),
-          snippet: message.snippet || ''
+          snippet: this.extractMessageBody(message.payload) || message.snippet || ''
         };
       });
 
@@ -105,5 +104,48 @@ export class GmailService {
     
     // If no angle brackets, assume the whole string is the email
     return fromHeader.trim();
+  }
+
+  private extractMessageBody(payload: any): string {
+    if (!payload) {
+      return '';
+    }
+
+    // If payload has body data directly
+    if (payload.body?.data) {
+      return Buffer.from(payload.body.data, 'base64').toString('utf-8');
+    }
+
+    // If payload has parts (multipart message)
+    if (payload.parts && Array.isArray(payload.parts)) {
+      for (const part of payload.parts) {
+        // Look for text/plain or text/html parts
+        if (part.mimeType === 'text/plain' || part.mimeType === 'text/html') {
+          if (part.body?.data) {
+            const content = Buffer.from(part.body.data, 'base64').toString('utf-8');
+            
+            // If it's HTML, strip basic tags for a cleaner text representation
+            if (part.mimeType === 'text/html') {
+              return content
+                .replace(/<[^>]*>/g, ' ')  // Remove HTML tags
+                .replace(/\s+/g, ' ')      // Normalize whitespace
+                .trim();
+            }
+            
+            return content;
+          }
+        }
+        
+        // Recursively check nested parts
+        if (part.parts) {
+          const nestedContent = this.extractMessageBody(part);
+          if (nestedContent) {
+            return nestedContent;
+          }
+        }
+      }
+    }
+
+    return '';
   }
 }

@@ -64,27 +64,30 @@ export function createMessagesRouter(gmailService: GmailService, openAiService?:
         } as ApiResponse);
       }
 
-      const enhancedMessages: EnhancedGmailMessage[] = [];
       let processedCount = 0;
       let failedCount = 0;
+      const enhancedMessages: EnhancedGmailMessage[] = [];
 
-      // Process each message through AI if service is available
-      for (const message of messages) {
-        const enhancedMessage: EnhancedGmailMessage = {
-          ...message,
-          content: {
-            original: message.snippet
-          },
-          aiProcessing: {
-            status: 'pending'
-          }
-        };
+      if (openAiService) {
+        console.log(`Processing ${messages.length} messages through AI using batched processing...`);
+        
+        // Use the batched processing method for efficiency
+        const aiResponses = await openAiService.processMessages(messages);
+        
+        // Combine messages with their AI responses
+        messages.forEach((message, index) => {
+          const aiResponse = aiResponses[index];
+          const enhancedMessage: EnhancedGmailMessage = {
+            ...message,
+            content: {
+              original: message.snippet
+            },
+            aiProcessing: {
+              status: 'pending'
+            }
+          };
 
-        if (openAiService) {
-          try {
-            console.log(`Processing message ${message.id} through AI...`);
-            const aiResponse = await openAiService.processMessage(message);
-            
+          if (aiResponse && aiResponse.summary !== 'AI processing failed for this message') {
             enhancedMessage.content.processed = {
               summary: aiResponse.summary,
               translatedText: aiResponse.translatedContent,
@@ -98,28 +101,33 @@ export function createMessagesRouter(gmailService: GmailService, openAiService?:
             };
             
             processedCount++;
-            console.log(`Successfully processed message ${message.id}`);
-            
-          } catch (error) {
-            console.error(`Failed to process message ${message.id}:`, error);
-            
+          } else {
             enhancedMessage.aiProcessing = {
               status: 'failed',
-              error: error instanceof Error ? error.message : 'AI processing failed'
+              error: 'AI processing failed'
             };
-            
             failedCount++;
           }
-        } else {
-          // No AI service available
-          enhancedMessage.aiProcessing = {
-            status: 'failed',
-            error: 'AI service not available'
-          };
-          failedCount++;
-        }
 
-        enhancedMessages.push(enhancedMessage);
+          enhancedMessages.push(enhancedMessage);
+        });
+        
+        console.log(`Batch processing completed: ${processedCount} successful, ${failedCount} failed`);
+      } else {
+        // No AI service available - create enhanced messages without AI processing
+        messages.forEach(message => {
+          enhancedMessages.push({
+            ...message,
+            content: {
+              original: message.snippet
+            },
+            aiProcessing: {
+              status: 'failed',
+              error: 'AI service not available'
+            }
+          });
+          failedCount++;
+        });
       }
 
       res.json({

@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { GmailService } from '../services/gmailService';
+import { GmailServiceRaw } from '../services/gmailServiceRaw';
 import { ApiResponse, GoogleAuthConfig } from '../types';
 
-export function createAuthRouter(gmailService: GmailService): Router {
+export function createAuthRouter(gmailService: GmailServiceRaw): Router {
   const router = Router();
 
   // Initiate OAuth flow

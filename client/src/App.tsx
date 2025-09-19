@@ -39,12 +39,9 @@ interface ApiResponse<T = any> {
 
 function App() {
   const [authStatus, setAuthStatus] = useState<AuthStatus>({ authenticated: false, email: null });
-  const [messages, setMessages] = useState<GmailMessage[]>([]);
   const [enhancedMessages, setEnhancedMessages] = useState<EnhancedGmailMessage[]>([]);
   const [loading, setLoading] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [useAiProcessing, setUseAiProcessing] = useState(false);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -88,7 +85,7 @@ function App() {
         credentials: 'include'
       });
       setAuthStatus({ authenticated: false, email: null });
-      setMessages([]);
+      setEnhancedMessages([]);
       setError(null);
     } catch (error) {
       console.error('Error logging out:', error);
@@ -97,29 +94,6 @@ function App() {
 
   const fetchMessages = async () => {
     setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch('/api/messages', {
-        credentials: 'include'
-      });
-      const result: ApiResponse<{ messages: GmailMessage[], count: number }> = await response.json();
-      
-      if (result.success && result.data) {
-        setMessages(result.data.messages);
-      } else {
-        setError(result.error || 'Failed to fetch messages');
-      }
-    } catch (error) {
-      setError('Error fetching messages');
-      console.error('Error fetching messages:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchEnhancedMessages = async () => {
-    setAiLoading(true);
     setError(null);
     
     try {
@@ -140,24 +114,13 @@ function App() {
         setEnhancedMessages(result.data.messages);
         console.log(`AI Processing Status - Processed: ${result.data.aiProcessingStatus.processed}, Failed: ${result.data.aiProcessingStatus.failed}`);
       } else {
-        setError(result.error || 'Failed to fetch enhanced messages');
+        setError(result.error || 'Failed to fetch messages');
       }
     } catch (error) {
-      setError('Error fetching enhanced messages');
-      console.error('Error fetching enhanced messages:', error);
+      setError('Error fetching messages');
+      console.error('Error fetching messages:', error);
     } finally {
-      setAiLoading(false);
-    }
-  };
-
-  const toggleAiProcessing = () => {
-    const newUseAi = !useAiProcessing;
-    setUseAiProcessing(newUseAi);
-    
-    if (newUseAi) {
-      fetchEnhancedMessages();
-    } else {
-      fetchMessages();
+      setLoading(false);
     }
   };
 
@@ -184,11 +147,8 @@ function App() {
               <button onClick={handleLogout} className="logout-btn">
                 Sign Out
               </button>
-              <button onClick={useAiProcessing ? fetchEnhancedMessages : fetchMessages} className="refresh-btn" disabled={loading || aiLoading}>
-                {(loading || aiLoading) ? 'Loading...' : 'Refresh Messages'}
-              </button>
-              <button onClick={toggleAiProcessing} className="ai-toggle-btn" disabled={loading || aiLoading}>
-                {useAiProcessing ? 'Disable AI Processing' : 'Enable AI Processing'}
+              <button onClick={fetchMessages} className="refresh-btn" disabled={loading}>
+                {loading ? 'Loading & Processing...' : 'Refresh Messages'}
               </button>
             </div>
 
@@ -199,87 +159,64 @@ function App() {
             )}
 
             <div className="messages-section">
-              <h2>Last 10 Unread Messages {useAiProcessing && '(AI Enhanced)'}</h2>
-              
-              {aiLoading && (
-                <p>Processing messages with AI...</p>
-              )}
+              <h2>Last 10 Unread Messages (AI Enhanced)</h2>
               
               {loading ? (
-                <p>Loading messages...</p>
-              ) : useAiProcessing ? (
-                enhancedMessages.length === 0 ? (
-                  <p>No unread messages found.</p>
-                ) : (
-                  <div className="messages-list">
-                    {enhancedMessages.map((message) => (
-                      <div key={message.id} className="message-item enhanced">
-                        <div className="message-header">
-                          <strong className="message-subject">{message.subject}</strong>
-                          <span className="message-date">{formatDate(message.date)}</span>
-                          <span className={`ai-status ${message.aiProcessing.status}`}>
-                            {message.aiProcessing.status === 'completed' ? '✓ AI Processed' : 
-                             message.aiProcessing.status === 'pending' ? '⏳ Processing...' : 
-                             '✗ AI Failed'}
-                          </span>
-                        </div>
-                        <div className="message-sender">From: {message.sender}</div>
-                        
-                        <div className="message-content">
-                          <div className="original-content">
-                            <strong>Original:</strong>
-                            <div className="message-snippet">{message.content.original}</div>
-                          </div>
-                          
-                          {message.content.processed && (
-                            <div className="ai-content">
-                              <div className="ai-summary">
-                                <strong>AI Summary:</strong>
-                                <div className="ai-text">{message.content.processed.summary}</div>
-                              </div>
-                              
-                              {message.content.processed.translatedText && (
-                                <div className="ai-translation">
-                                  <strong>Translation {message.content.processed.language ? `(${message.content.processed.language})` : ''}:</strong>
-                                  <div className="ai-text">{message.content.processed.translatedText}</div>
-                                </div>
-                              )}
-                              
-                              {message.content.processed.confidence && (
-                                <div className="ai-confidence">
-                                  <small>AI Confidence: {Math.round(message.content.processed.confidence * 100)}%</small>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          
-                          {message.aiProcessing.status === 'failed' && message.aiProcessing.error && (
-                            <div className="ai-error">
-                              <small>AI processing failed: {message.aiProcessing.error}</small>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )
+                <p>Loading and processing messages with AI...</p>
+              ) : enhancedMessages.length === 0 ? (
+                <p>No unread messages found.</p>
               ) : (
-                messages.length === 0 ? (
-                  <p>No unread messages found.</p>
-                ) : (
-                  <div className="messages-list">
-                    {messages.map((message) => (
-                      <div key={message.id} className="message-item">
-                        <div className="message-header">
-                          <strong className="message-subject">{message.subject}</strong>
-                          <span className="message-date">{formatDate(message.date)}</span>
-                        </div>
-                        <div className="message-sender">From: {message.sender}</div>
-                        <div className="message-snippet">{message.snippet}</div>
+                <div className="messages-list">
+                  {enhancedMessages.map((message) => (
+                    <div key={message.id} className="message-item enhanced">
+                      <div className="message-header">
+                        <strong className="message-subject">{message.subject}</strong>
+                        <span className="message-date">{formatDate(message.date)}</span>
+                        <span className={`ai-status ${message.aiProcessing.status}`}>
+                          {message.aiProcessing.status === 'completed' ? '✓ AI Processed' : 
+                           message.aiProcessing.status === 'pending' ? '⏳ Processing...' : 
+                           '✗ AI Failed'}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                )
+                      <div className="message-sender">From: {message.sender}</div>
+                      
+                      <div className="message-content">
+                        <div className="original-content">
+                          <strong>Original:</strong>
+                          <div className="message-snippet">{message.content.original}</div>
+                        </div>
+                        
+                        {message.content.processed && (
+                          <div className="ai-content">
+                            <div className="ai-summary">
+                              <strong>AI Summary:</strong>
+                              <div className="ai-text">{message.content.processed.summary}</div>
+                            </div>
+                            
+                            {message.content.processed.translatedText && (
+                              <div className="ai-translation">
+                                <strong>Translation {message.content.processed.language ? `(${message.content.processed.language})` : ''}:</strong>
+                                <div className="ai-text">{message.content.processed.translatedText}</div>
+                              </div>
+                            )}
+                            
+                            {message.content.processed.confidence && (
+                              <div className="ai-confidence">
+                                <small>AI Confidence: {Math.round(message.content.processed.confidence * 100)}%</small>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {message.aiProcessing.status === 'failed' && message.aiProcessing.error && (
+                          <div className="ai-error">
+                            <small>AI processing failed: {message.aiProcessing.error}</small>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>

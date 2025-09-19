@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { GmailService } from '../services/gmailService';
+import { GmailServiceRaw } from '../services/gmailServiceRaw';
 import { OpenAiService } from '../services/openAiService';
 import { ApiResponse, EnhancedGmailMessage } from '../types';
 
-export function createMessagesRouter(gmailService: GmailService, openAiService?: OpenAiService): Router {
+export function createMessagesRouter(gmailService: GmailServiceRaw, openAiService?: OpenAiService): Router {
   const router = Router();
 
   // Middleware to check authentication
@@ -73,6 +73,8 @@ export function createMessagesRouter(gmailService: GmailService, openAiService?:
         
         // Use the batched processing method for efficiency
         const aiResponses = await openAiService.processMessages(messages);
+
+        console.log("aiResponses",aiResponses)
         
         // Combine messages with their AI responses
         messages.forEach((message, index) => {

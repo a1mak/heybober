@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
 import dotenv from 'dotenv';
-import { GmailService } from './services/gmailService';
+import { GmailServiceRaw } from './services/gmailServiceRaw';
 import { OpenAiService } from './services/openAiService';
 import { createAuthRouter } from './routes/auth';
 import { createMessagesRouter } from './routes/messages';
@@ -30,8 +30,8 @@ const googleAuthConfig: GoogleAuthConfig = {
   redirectUri: process.env.GOOGLE_REDIRECT_URI || `http://localhost:${PORT}/auth/callback`
 };
 
-// Initialize Gmail service
-const gmailService = new GmailService(googleAuthConfig);
+// Initialize Gmail service (using raw implementation)
+const gmailService = new GmailServiceRaw(googleAuthConfig);
 
 // Initialize OpenAI service (optional - graceful degradation if not configured)
 let openAiService: OpenAiService | undefined;
